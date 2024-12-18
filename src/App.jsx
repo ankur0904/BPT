@@ -9,6 +9,7 @@ function App() {
   const [itemInput, setItemInput] = useState("");
   const [minSupport, setMinSupport] = useState(0.5);
   const [results, setResults] = useState([]);
+  const [confidenceResults, setConfidenceResults] = useState([]);
 
   const handleAddItem = () => {
     if (itemInput.trim()) {
@@ -39,7 +40,21 @@ function App() {
 
     const filteredItems = itemsWithSupport.filter((item) => item.support >= minSupport);
 
+    // Calculate h-confidence for each item within hypercliques
+    const confidenceData = hypercliques.map((clique) => {
+      return clique.map((item) => {
+        const cliqueItemCount = clique.reduce((counts, cliqueItem) => {
+          counts[cliqueItem] = (counts[cliqueItem] || 0) + 1;
+          return counts;
+        }, {});
+
+        const confidence = cliqueItemCount[item] / clique.length; // h-confidence formula
+        return { item, confidence: confidence.toFixed(2) };
+      });
+    });
+
     setResults(filteredItems);
+    setConfidenceResults(confidenceData.flat());
   };
 
   return (
@@ -173,6 +188,19 @@ function App() {
               </ul>
             ) : (
               <p className="text-gray-600 mt-2">No results to display.</p>
+            )}
+            <h3 className="text-xl font-semibold mt-6">h-Confidence Results:</h3>
+            {confidenceResults.length > 0 ? (
+              <ul className="list-disc list-inside mt-4">
+                {confidenceResults.map((item, idx) => (
+                  <li key={idx} className="text-gray-700">
+                    <span className="font-semibold">{item.item}</span> - h-Confidence:{" "}
+                    {item.confidence}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-600 mt-2">No h-confidence results to display.</p>
             )}
           </section>
         </main>
